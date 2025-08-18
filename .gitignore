@@ -1,1 +1,7 @@
 .env
+.idea
+.vscode
+tmp-api-gateway
+tmp-authentication
+tmp-email-sender
+tmp-receipt-data

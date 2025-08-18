@@ -1,0 +1,102 @@
+version: "3.9"
+
+services:
+  receipt:
+    image: receipt_microservices-receipt
+    build:
+      context: ./receipt-data
+    container_name: receipt-service
+    ports:
+      - "${RECEIPT_PORT}:${RECEIPT_PORT}"
+    environment:
+      - SPRING_DATASOURCE_URL=${RECEIPT_DB_URL}
+      - SPRING_DATASOURCE_USERNAME=${RECEIPT_DB_USER}
+      - SPRING_DATASOURCE_PASSWORD=${RECEIPT_DB_PASSWORD}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_HOST=${REDIS_HOST}
+      - CLIENTS_USER=http://authentication:${AUTH_PORT}/users
+      - SERVER_PORT=${RECEIPT_PORT}
+      - SECURITY_JWT=${SECURITY_JWT}
+      - RECEIPT_CHECK_URL=${RECEIPT_CHECK_URL}
+    depends_on:
+      - db
+      - redis
+
+  authentication:
+    image: receipt_microservices-authentication
+    build:
+      context: ./authentication
+    container_name: auth-service
+    ports:
+      - "${AUTH_PORT}:${AUTH_PORT}"
+    environment:
+      - SPRING_DATASOURCE_URL=${AUTH_DB_URL}
+      - SPRING_DATASOURCE_USERNAME=${AUTH_DB_USER}
+      - SPRING_DATASOURCE_PASSWORD=${AUTH_DB_PASSWORD}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - CLIENTS_EMAIL_SENDER_URL=${AUTH_CLIENTS_EMAIL_SENDER_URL}
+      - CLIENTS_HEADER_KEY=${SECURITY_CLIENTS_HEADER_KEY}
+      - SERVER_PORT=${AUTH_PORT}
+      - SECURITY_JWT=${SECURITY_JWT}
+    depends_on:
+      - db
+      - redis
+
+  email-sender:
+    image: receipt_microservices-email-sender
+    build:
+      context: ./email-sender
+    container_name: email-sender-service
+    ports:
+      - "${EMAIL_SENDER_PORT}:${EMAIL_SENDER_PORT}"
+    environment:
+      - MAIL_HOST=${MAIL_SENDER_HOST}
+      - MAIL_PORT=${MAIL_SENDER_PORT}
+      - MAIL_USERNAME=${MAIL_SENDER_USERNAME}
+      - EMAIL_USERNAME=${MAIL_SENDER_USERNAME}
+      - MAIL_PASSWORD=${MAIL_SENDER_PASSWORD}
+      - SERVER_PORT=${EMAIL_SENDER_PORT}
+      - SECURITY_JWT=${SECURITY_JWT}
+      - SECURITY_CLIENTS_HEADER_KEY=${SECURITY_CLIENTS_HEADER_KEY}
+    depends_on:
+      - db
+
+  api-gateway:
+    image: receipt_microservices-api-gateway
+    container_name: api-gateway-service
+    ports:
+      - "${API_GATEWAY_PORT}:${API_GATEWAY_PORT}"
+    environment:
+      - AUTH_URL=${API_GATEWAY_AUTH_URL}
+      - RECEIPT_URL=${API_GATEWAY_RECEIPT_URL}
+      - SERVER_PORT=${API_GATEWAY_PORT}
+    depends_on:
+      - db
+      - authentication
+      - receipt
+
+  db:
+    image: postgres:15-alpine
+    container_name: postgres-db
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d:ro
+  redis:
+    image: redis:8-alpine
+    container_name: redis_service
+    ports:
+      - "${REDIS_PORT}:${REDIS_PORT}"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    
+volumes:
+  db_data:
+  redis_data:
