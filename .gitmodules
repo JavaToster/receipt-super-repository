@@ -1,0 +1,12 @@
+[submodule "receipt-data"]
+	path = receipt-data
+	url = git@github.com:JavaToster/receipt-receipt-data.git
+[submodule "email-sender"]
+	path = email-sender
+	url = git@github.com:JavaToster/email-sender.git
+[submodule "authentication"]
+	path = authentication
+	url = git@github.com:JavaToster/receipt-authentication.git
+[submodule "api-gateway"]
+	path = api-gateway
+	url = git@github.com:JavaToster/receipt-api-gateway.git
