@@ -14,7 +14,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${RECEIPT_DB_PASSWORD}
       - REDIS_PORT=${REDIS_PORT}
       - REDIS_HOST=${REDIS_HOST}
-      - CLIENTS_USER=http://authentication:${AUTH_PORT}/users
+      - CLIENTS_USER=${RECEIPT_CLIENTS_USER_URL}
       - SERVER_PORT=${RECEIPT_PORT}
       - SECURITY_JWT=${SECURITY_JWT}
       - RECEIPT_CHECK_URL=${RECEIPT_CHECK_URL}
@@ -42,6 +42,7 @@ services:
     depends_on:
       - db
       - redis
+      - email-sender
 
   email-sender:
     image: receipt_microservices-email-sender
